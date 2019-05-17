@@ -354,10 +354,12 @@
 			baseConfigurationReference = 8E86D982A2FC144A70FD918D /* Pods-cleaner.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_STYLE = Manual;
-				DEVELOPMENT_TEAM = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 2MC8B96QW9;
 				GCC_PREFIX_HEADER = "$(SRCROOT)/cleaner/PrefixHeader.pch";
 				INFOPLIST_FILE = cleaner/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -374,10 +376,12 @@
 			baseConfigurationReference = 1DCB8EFA7D9723A06DC149D4 /* Pods-cleaner.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_STYLE = Manual;
-				DEVELOPMENT_TEAM = "";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 2MC8B96QW9;
 				GCC_PREFIX_HEADER = "$(SRCROOT)/cleaner/PrefixHeader.pch";
 				INFOPLIST_FILE = cleaner/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

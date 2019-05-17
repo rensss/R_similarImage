@@ -221,6 +221,9 @@ static id sharedSingleton = nil;
         }
     }
     
+    fromImage = [self OriginImage:fromImage scaleToSize:CGSizeMake(200, 200)];
+    toImage = [self OriginImage:toImage scaleToSize:CGSizeMake(200, 200)];
+    
     IplImage *fromIplImage = [self convertToIplImage:fromImage];
     // 创建图像header并分配图像数据 图像深度为原图像深度
     IplImage *fromDscIpl = cvCreateImage(cvGetSize(fromIplImage), fromIplImage->depth, 1);
@@ -229,7 +232,6 @@ static id sharedSingleton = nil;
     // 将输入数组像素从一个颜色空间转换为另一个颜色空间 (灰度图)
     cvCvtColor(fromDscIpl, fromDscIplNew, CV_GRAY2BGR);
 //    UIImage *from = [self convertToUIImage:fromDscIplNew];
-
 
     IplImage *toIplImage = [self convertToIplImage:toImage];
     IplImage *toDscIplImage = cvCreateImage(cvGetSize(toIplImage), toIplImage ->depth, 1);
