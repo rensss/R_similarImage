@@ -83,17 +83,22 @@
     
     NSMutableArray *requestIDArray = [NSMutableArray array];
     NSMutableArray *allPhotoData = [NSMutableArray array];
-    
+	
+	// 计算代码运行时间
+	CFAbsoluteTime startTime = CFAbsoluteTimeGetCurrent();
+	
     // 获取全部图像
     for (PHAsset *asset in self.allPhotos) {
         [requestIDArray addObject:asset.localIdentifier];
-        
-//        PHImageRequestOptions
-        
+		
         [self.imageManager requestImageDataForAsset:asset options:self.requestOption resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
             if (imageData) {
                 [allPhotoData addObject:imageData];
                 if ([allPhotoData count] == [self.allPhotos count]) {
+					CFAbsoluteTime linkTime = (CFAbsoluteTimeGetCurrent() - startTime);
+					// 打印运行时间
+					NSLog(@"Linked in %f ms", linkTime * 1000.0);
+					
                     [self compareImages:allPhotoData andIDs:requestIDArray];
                 }
             }
@@ -109,9 +114,15 @@
         OSTuple<OSImageId *, NSData *> *tuple = [OSTuple tupleWithFirst:requestIDArray[i] andSecond:allDatas[i]];
         [dataArr addObject:tuple];
     }
-    
-    NSArray<OSTuple<OSImageId *, OSImageId *> *> *similarImageIdsAsTuples = [[OSImageHashing sharedInstance] similarImagesWithHashingQuality:OSImageHashingQualityHigh forImages:dataArr];
-    
+	// 计算代码运行时间
+	CFAbsoluteTime startTime = CFAbsoluteTimeGetCurrent();
+	
+	NSArray<OSTuple<OSImageId *, OSImageId *> *> *similarImageIdsAsTuples = [[OSImageHashing sharedInstance] similarImagesWithHashingQuality:OSImageHashingQualityHigh forImages:dataArr];
+	
+	CFAbsoluteTime linkTime = (CFAbsoluteTimeGetCurrent() - startTime);
+	// 打印运行时间
+	NSLog(@"Linked in %f ms", linkTime * 1000.0);
+	
     NSLog(@"Similar image ids: %@", similarImageIdsAsTuples);
     
     NSMutableArray *similarImageDimensionArray = [NSMutableArray array];
