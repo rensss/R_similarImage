@@ -1,0 +1,28 @@
+PODS:
+  - CocoaImageHashing (1.7.0)
+  - OpenCV (3.4.2)
+
+DEPENDENCIES:
+  - CocoaImageHashing (from `https://github.com/ameingast/cocoaimagehashing.git`)
+  - OpenCV
+
+SPEC REPOS:
+  https://github.com/cocoapods/specs.git:
+    - OpenCV
+
+EXTERNAL SOURCES:
+  CocoaImageHashing:
+    :git: https://github.com/ameingast/cocoaimagehashing.git
+
+CHECKOUT OPTIONS:
+  CocoaImageHashing:
+    :commit: 10b07f12e83da3f802078b6160955ad8de476b55
+    :git: https://github.com/ameingast/cocoaimagehashing.git
+
+SPEC CHECKSUMS:
+  CocoaImageHashing: 2c8efd6dd60f9030cd54086b34ffc48e927821c3
+  OpenCV: 452909747854c92e0f59670961ed5131f5286cb5
+
+PODFILE CHECKSUM: 719c190bc3503eb7c7f06d8bb4def5ed1ecc4a10
+
+COCOAPODS: 1.6.1
