@@ -91,9 +91,11 @@
 //        PHImageRequestOptions
         
         [self.imageManager requestImageDataForAsset:asset options:self.requestOption resultHandler:^(NSData * _Nullable imageData, NSString * _Nullable dataUTI, UIImageOrientation orientation, NSDictionary * _Nullable info) {
-            [allPhotoData addObject:imageData];
-            if ([allPhotoData count] == [self.allPhotos count]) {
-                [self compareImages:allPhotoData andIDs:requestIDArray];
+            if (imageData) {
+                [allPhotoData addObject:imageData];
+                if ([allPhotoData count] == [self.allPhotos count]) {
+                    [self compareImages:allPhotoData andIDs:requestIDArray];
+                }
             }
         }];
     }
