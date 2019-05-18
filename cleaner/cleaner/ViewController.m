@@ -18,9 +18,9 @@
 //#define kImageNum 11
 #define kImageNum 10
 
-#define kTargetSize CGSizeMake(500, 500)
+#define kTargetSize CGSizeMake(600, 600)
 
-@interface ViewController ()
+@interface ViewController () <UICollectionViewDelegate,UICollectionViewDataSource>
 
 /*
  PHAsset: 代表照片库中的一个资源，跟 ALAsset 类似，通过 PHAsset 可以获取和保存资源
@@ -39,6 +39,9 @@
 @property (nonatomic, strong) PHCachingImageManager *imageManager; /**< 缓存管理*/
 @property (nonatomic, strong) PHImageRequestOptions *requestOption; /**< 控制加载图片时的一系列参数*/
 
+@property (nonatomic, strong) UICollectionView *collectionView; /**< 展示view*/
+@property (nonatomic, strong) NSMutableArray *dataArray; /**< 数据源*/
+
 #pragma mark -
 @property (nonatomic, strong) NSMutableArray *imageArray; /**< 图像数组*/
 @property (nonatomic, strong) UILabel *similar; /**< 相似度*/
@@ -50,14 +53,16 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
+	
+	// 添加collectionView
+	[self.view addSubview:self.collectionView];
     // 获取相册权限
     [self fetchAssetCollection];
     // 获取全部照片
     [self getAllPhoto];
 }
 
-#pragma mark - 相册
+#pragma mark - 方向一 相册
 #pragma mark - 获取相册权限
 - (void)fetchAssetCollection {
     PHFetchOptions *allPhotosOptions = [[PHFetchOptions alloc] init];
@@ -72,9 +77,9 @@
     //_userCollections = [PHCollectionList fetchTopLevelUserCollectionsWithOptions:nil];
 }
 
+/// 获取全部照片
 - (void)getAllPhoto {
-    
-    
+	
     self.imageManager = [[PHCachingImageManager alloc] init];
     
     self.requestOption = [[PHImageRequestOptions alloc] init];
@@ -106,6 +111,7 @@
     }
 }
 
+/// 对比
 - (void)compareImages:(NSMutableArray *)allDatas andIDs:(NSMutableArray *)requestIDArray {
     
     NSMutableArray<OSTuple<OSImageId *, NSData *> *> *dataArr = [NSMutableArray new];
@@ -135,13 +141,16 @@
                 [twoImage addObject:image];
                 [similarImageDimensionArray addObject:twoImage];
                 if ([similarImageDimensionArray count] == [similarImageIdsAsTuples count]) {
-                    NSLog(@"%lu",(unsigned long)[similarImageDimensionArray count]);
+					NSLog(@"%lu",(unsigned long)[similarImageDimensionArray count]);
+					weakSelf.dataArray = similarImageDimensionArray;
+					[weakSelf.collectionView reloadData];
                 }
             }];
         }];
     }
 }
 
+/// 根据ID获取照片                  
 - (void)getResultWithRequestID:(NSString *)requestID withHandler:(void(^)(UIImage *image))callBack {
     
     // 根据asset的localidentifier（唯一标识）来获取asset
@@ -150,7 +159,7 @@
     [result enumerateObjectsUsingBlock:^(id _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         PHAsset *imageAsset = obj;
         // targetSize 是以像素计量的，所以需要实际的 size * UIScreen.mainScreen.scale
-        [self.imageManager requestImageForAsset:imageAsset targetSize:kTargetSize contentMode:PHImageContentModeAspectFill options:self.requestOption resultHandler:^(UIImage * _Nullable result, NSDictionary * _Nullable info) {
+        [self.imageManager requestImageForAsset:imageAsset targetSize:kTargetSize contentMode:PHImageContentModeAspectFill options:nil resultHandler:^(UIImage * _Nullable result, NSDictionary * _Nullable info) {
             if (callBack) {
                 callBack(result);
             }
@@ -158,7 +167,57 @@
     }];
 }
 
-#pragma mark -
+#pragma mark - delegate
+#pragma mark -- UICollectionViewDelegate
+- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
+	
+}
+
+#pragma mark -- UICollectionViewDataSource
+- (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView {
+	return self.dataArray.count;
+}
+
+- (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
+	return 2;
+}
+
+- (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
+	UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"UICollectionViewCell" forIndexPath:indexPath];
+	
+	UIImage *showImage = self.dataArray[indexPath.section][indexPath.item];
+	cell.contentView.layer.contents = (id)showImage.CGImage;
+	
+	return cell;
+}
+
+#pragma mark - getting
+- (UICollectionView *)collectionView {
+	if (!_collectionView) {
+		
+		// 设置 flowLayout
+		UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
+		flowLayout.minimumInteritemSpacing = 40;
+		flowLayout.minimumLineSpacing = 40;
+		flowLayout.sectionInset = UIEdgeInsetsMake(10, 40, 10, 40);
+		CGFloat width = (self.view.frame.size.width - flowLayout.minimumInteritemSpacing*3)/2;
+		flowLayout.itemSize = CGSizeMake(width, width);
+		flowLayout.scrollDirection = UICollectionViewScrollDirectionVertical;
+		
+		_collectionView = [[UICollectionView alloc] initWithFrame:self.view.bounds collectionViewLayout:flowLayout];
+		
+		_collectionView.contentInset = UIEdgeInsetsMake(40, 0, 50, 0);
+		_collectionView.delegate = self;
+		_collectionView.dataSource = self;
+		_collectionView.backgroundColor = [UIColor clearColor];
+		
+		// 注册 cell
+		[_collectionView registerClass:[UICollectionViewCell class] forCellWithReuseIdentifier:@"UICollectionViewCell"];
+	}
+	return _collectionView;
+}
+
+#pragma mark - 方向二 图片对比
 #pragma mark - InitUI
 - (void)initUI {
     self.imageArray = [NSMutableArray array];
