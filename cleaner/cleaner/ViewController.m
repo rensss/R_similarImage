@@ -17,10 +17,10 @@
 
 //#define kImageNum 11
 #define kImageNum 10
+#define kTargetSizeWidth 300
+#define kTargetSize CGSizeMake(kTargetSizeWidth, kTargetSizeWidth)
 
-#define kTargetSize CGSizeMake(600, 600)
-
-@interface ViewController () <UICollectionViewDelegate,UICollectionViewDataSource>
+@interface ViewController () <UICollectionViewDelegate,UICollectionViewDataSource,PHPhotoLibraryChangeObserver>
 
 /*
  PHAsset: 代表照片库中的一个资源，跟 ALAsset 类似，通过 PHAsset 可以获取和保存资源
@@ -42,11 +42,12 @@
 @property (nonatomic, strong) UICollectionView *collectionView; /**< 展示view*/
 @property (nonatomic, strong) NSMutableArray *dataArray; /**< 数据源*/
 
+@property (nonatomic, strong) PHFetchResult *fetchResult; /**< 操作对象*/
+
 #pragma mark -
 @property (nonatomic, strong) NSMutableArray *imageArray; /**< 图像数组*/
 @property (nonatomic, strong) UILabel *similar; /**< 相似度*/
 @property (nonatomic, assign) NSInteger selectNum; /**< 选中数*/
-
 @end
 
 @implementation ViewController
@@ -82,9 +83,7 @@
 	
     self.imageManager = [[PHCachingImageManager alloc] init];
     
-    self.requestOption = [[PHImageRequestOptions alloc] init];
-    // 若设置 PHImageRequestOptionsResizeModeExact 则 requestImageForAsset 下来的图片大小是 targetSize 的
-    self.requestOption.resizeMode = PHImageRequestOptionsResizeModeExact;
+    [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
     
     NSMutableArray *requestIDArray = [NSMutableArray array];
     NSMutableArray *allPhotoData = [NSMutableArray array];
@@ -102,7 +101,7 @@
                 if ([allPhotoData count] == [self.allPhotos count]) {
 					CFAbsoluteTime linkTime = (CFAbsoluteTimeGetCurrent() - startTime);
 					// 打印运行时间
-					NSLog(@"Linked in %f ms", linkTime * 1000.0);
+					NSLog(@"获取所有照片所花时间 %f ms", linkTime * 1000.0);
 					
                     [self compareImages:allPhotoData andIDs:requestIDArray];
                 }
@@ -127,31 +126,28 @@
 	
 	CFAbsoluteTime linkTime = (CFAbsoluteTimeGetCurrent() - startTime);
 	// 打印运行时间
-	NSLog(@"Linked in %f ms", linkTime * 1000.0);
+	NSLog(@"对比所花时间 %f ms", linkTime * 1000.0);
 	
     NSLog(@"Similar image ids: %@", similarImageIdsAsTuples);
     
     NSMutableArray *similarImageDimensionArray = [NSMutableArray array];
     for (OSTuple *tuple in similarImageIdsAsTuples) {
-        __weak typeof(self) weakSelf = self;
-        NSMutableArray *twoImage = [NSMutableArray array];
-        [self getResultWithRequestID:tuple.first withHandler:^(UIImage *image) {
-            [twoImage addObject:image];
-            [weakSelf getResultWithRequestID:tuple.second withHandler:^(UIImage *image) {
-                [twoImage addObject:image];
-                [similarImageDimensionArray addObject:twoImage];
-                if ([similarImageDimensionArray count] == [similarImageIdsAsTuples count]) {
-					NSLog(@"%lu",(unsigned long)[similarImageDimensionArray count]);
-					weakSelf.dataArray = similarImageDimensionArray;
-					[weakSelf.collectionView reloadData];
-                }
-            }];
-        }];
+        NSMutableArray *subArray = [NSMutableArray array];
+        [subArray addObject:tuple.first];
+        [subArray addObject:tuple.second];
+        [similarImageDimensionArray addObject:subArray];
     }
+    self.dataArray = similarImageDimensionArray;
+    [self.collectionView reloadData];
 }
 
 /// 根据ID获取照片                  
 - (void)getResultWithRequestID:(NSString *)requestID withHandler:(void(^)(UIImage *image))callBack {
+    
+    PHImageRequestOptions *option = [[PHImageRequestOptions alloc] init];
+    option.synchronous = true;
+//    option.resizeMode = PHImageRequestOptionsResizeModeFast;
+    option.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
     
     // 根据asset的localidentifier（唯一标识）来获取asset
     PHFetchResult *result = [PHAsset fetchAssetsWithLocalIdentifiers:@[requestID] options:nil];
@@ -159,7 +155,7 @@
     [result enumerateObjectsUsingBlock:^(id _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         PHAsset *imageAsset = obj;
         // targetSize 是以像素计量的，所以需要实际的 size * UIScreen.mainScreen.scale
-        [self.imageManager requestImageForAsset:imageAsset targetSize:kTargetSize contentMode:PHImageContentModeAspectFill options:nil resultHandler:^(UIImage * _Nullable result, NSDictionary * _Nullable info) {
+        [self.imageManager requestImageForAsset:imageAsset targetSize:kTargetSize contentMode:PHImageContentModeAspectFill options:option resultHandler:^(UIImage * _Nullable result, NSDictionary * _Nullable info) {
             if (callBack) {
                 callBack(result);
             }
@@ -170,7 +166,19 @@
 #pragma mark - delegate
 #pragma mark -- UICollectionViewDelegate
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
-	
+//    UICollectionViewCell *cell = [collectionView cellForItemAtIndexPath:indexPath];
+    [collectionView deselectItemAtIndexPath:indexPath animated:YES];
+    // 点击的照片
+    self.fetchResult = [PHAsset fetchAssetsWithLocalIdentifiers:@[self.dataArray[indexPath.section][indexPath.item]] options:nil];
+    // 删除照片
+    [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
+        [PHAssetChangeRequest deleteAssets:self.fetchResult];
+    } completionHandler:^(BOOL success, NSError *error) {
+        NSLog(@"Finished updating asset. %@", (success ? @"Success." : error));
+        if (!success) {
+            NSLog(@"%@",error.description);
+        }
+    }];
 }
 
 #pragma mark -- UICollectionViewDataSource
@@ -184,11 +192,29 @@
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
 	UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"UICollectionViewCell" forIndexPath:indexPath];
-	
-	UIImage *showImage = self.dataArray[indexPath.section][indexPath.item];
-	cell.contentView.layer.contents = (id)showImage.CGImage;
-	
+    cell.contentView.layer.contents = nil;
+    
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        [self getResultWithRequestID:self.dataArray[indexPath.section][indexPath.item] withHandler:^(UIImage *image) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                cell.contentView.layer.contents = (id)image.CGImage;
+            });
+        }];
+    });
+    
 	return cell;
+}
+
+#pragma mark -- PHPhotoLibraryChangeObserver
+- (void)photoLibraryDidChange:(PHChange *)changeInstance {
+    // Photos may call this method on a background queue;
+    // switch to the main queue to update the UI.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSLog(@"--------");
+//        PHObject *obj =
+//        PHObjectChangeDetails *albumChanges = [changeInstance changeDetailsForObject:changeInstance];
+//        changeDetailsForFetchResult
+    });
 }
 
 #pragma mark - getting
@@ -206,7 +232,7 @@
 		
 		_collectionView = [[UICollectionView alloc] initWithFrame:self.view.bounds collectionViewLayout:flowLayout];
 		
-		_collectionView.contentInset = UIEdgeInsetsMake(40, 0, 50, 0);
+		_collectionView.contentInset = UIEdgeInsetsMake(40, 0, 40, 0);
 		_collectionView.delegate = self;
 		_collectionView.dataSource = self;
 		_collectionView.backgroundColor = [UIColor clearColor];
@@ -215,6 +241,21 @@
 		[_collectionView registerClass:[UICollectionViewCell class] forCellWithReuseIdentifier:@"UICollectionViewCell"];
 	}
 	return _collectionView;
+}
+
+- (PHImageRequestOptions *)requestOption {
+    if (!_requestOption) {
+        _requestOption = [[PHImageRequestOptions alloc] init];
+        _requestOption.synchronous = false;
+        // 若设置 PHImageRequestOptionsResizeModeExact 则 requestImageForAsset 下来的图片大小是 targetSize 的
+        _requestOption.resizeMode = PHImageRequestOptionsResizeModeExact;
+        // 图像质量。
+        // 有三种值：Opportunistic，在速度与质量中均衡；
+        // HighQualityFormat，不管花费多长时间，提供高质量图像；
+        // FastFormat，以最快速度提供好的质量。这个属性只有在 synchronous 为 NO 时有效。
+        _requestOption.deliveryMode = PHImageRequestOptionsDeliveryModeFastFormat;
+    }
+    return _requestOption;
 }
 
 #pragma mark - 方向二 图片对比
