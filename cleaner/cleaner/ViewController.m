@@ -129,6 +129,7 @@
 	NSLog(@"对比所花时间 %f ms", linkTime * 1000.0);
 	
     NSLog(@"Similar image ids: %@", similarImageIdsAsTuples);
+    NSLog(@"%ld 对相似图",[similarImageIdsAsTuples count]);
     
     NSMutableArray *similarImageDimensionArray = [NSMutableArray array];
     for (OSTuple *tuple in similarImageIdsAsTuples) {
@@ -193,6 +194,8 @@
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
 	UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"UICollectionViewCell" forIndexPath:indexPath];
     cell.contentView.layer.contents = nil;
+    cell.contentView.layer.contentsGravity = kCAGravityResizeAspect;
+//    cell.contentView.clipsToBounds = YES;
     
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         [self getResultWithRequestID:self.dataArray[indexPath.section][indexPath.item] withHandler:^(UIImage *image) {
@@ -224,8 +227,8 @@
 		// 设置 flowLayout
 		UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
 		flowLayout.minimumInteritemSpacing = 40;
-		flowLayout.minimumLineSpacing = 40;
-		flowLayout.sectionInset = UIEdgeInsetsMake(10, 40, 10, 40);
+		flowLayout.minimumLineSpacing = 10;
+        flowLayout.sectionInset = UIEdgeInsetsMake(0, 40, 0, 40);
 		CGFloat width = (self.view.frame.size.width - flowLayout.minimumInteritemSpacing*3)/2;
 		flowLayout.itemSize = CGSizeMake(width, width);
 		flowLayout.scrollDirection = UICollectionViewScrollDirectionVertical;
