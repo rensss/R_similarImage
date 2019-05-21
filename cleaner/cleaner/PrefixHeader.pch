@@ -13,4 +13,10 @@
 #import <opencv2/opencv.hpp>
 #endif
 
+#import "MBProgressHUD.h"
+
+#import "RKAlertMessage.h"
+#import "RKLoadingView.h"
+
+
 #endif /* PrefixHeader_pch */

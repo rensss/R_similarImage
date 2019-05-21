@@ -14,6 +14,8 @@
 		1A02213C228C1CA10016C637 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1A02213A228C1CA10016C637 /* LaunchScreen.storyboard */; };
 		1A02213F228C1CA10016C637 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A02213E228C1CA10016C637 /* main.m */; };
 		1A022147228C1CED0016C637 /* SimilarCompared.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1A022146228C1CED0016C637 /* SimilarCompared.mm */; };
+		1A24B8E82293930E0034160A /* RKLoadingView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A24B8E42293930E0034160A /* RKLoadingView.m */; };
+		1A24B8E92293930E0034160A /* RKAlertMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A24B8E72293930E0034160A /* RKAlertMessage.m */; };
 		1A2CD656228D127B00591C92 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A2CD655228D127B00591C92 /* AssetsLibrary.framework */; };
 		1A2CD659228D161400591C92 /* UIImage+OpenCV.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1A2CD657228D161400591C92 /* UIImage+OpenCV.mm */; };
 		A2D7FF8B2BD7305CA6B12406 /* libPods-cleaner.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6572F15DDE7E25620842D5D5 /* libPods-cleaner.a */; };
@@ -32,6 +34,10 @@
 		1A02213E228C1CA10016C637 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		1A022145228C1CED0016C637 /* SimilarCompared.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SimilarCompared.h; sourceTree = "<group>"; };
 		1A022146228C1CED0016C637 /* SimilarCompared.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = SimilarCompared.mm; sourceTree = "<group>"; };
+		1A24B8E42293930E0034160A /* RKLoadingView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RKLoadingView.m; sourceTree = "<group>"; };
+		1A24B8E52293930E0034160A /* RKAlertMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RKAlertMessage.h; sourceTree = "<group>"; };
+		1A24B8E62293930E0034160A /* RKLoadingView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RKLoadingView.h; sourceTree = "<group>"; };
+		1A24B8E72293930E0034160A /* RKAlertMessage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RKAlertMessage.m; sourceTree = "<group>"; };
 		1A2CD654228D11C400591C92 /* PrefixHeader.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PrefixHeader.pch; sourceTree = "<group>"; };
 		1A2CD655228D127B00591C92 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
 		1A2CD657228D161400591C92 /* UIImage+OpenCV.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UIImage+OpenCV.mm"; sourceTree = "<group>"; };
@@ -98,8 +104,20 @@
 				1A02213D228C1CA10016C637 /* Info.plist */,
 				1A02213E228C1CA10016C637 /* main.m */,
 				1A2CD654228D11C400591C92 /* PrefixHeader.pch */,
+				1A24B8E32293930E0034160A /* AlertMessage */,
 			);
 			path = cleaner;
+			sourceTree = "<group>";
+		};
+		1A24B8E32293930E0034160A /* AlertMessage */ = {
+			isa = PBXGroup;
+			children = (
+				1A24B8E62293930E0034160A /* RKLoadingView.h */,
+				1A24B8E42293930E0034160A /* RKLoadingView.m */,
+				1A24B8E52293930E0034160A /* RKAlertMessage.h */,
+				1A24B8E72293930E0034160A /* RKAlertMessage.m */,
+			);
+			path = AlertMessage;
 			sourceTree = "<group>";
 		};
 		CF7874A6D067F9DD8ED6E4C8 /* Frameworks */ = {
@@ -209,8 +227,10 @@
 			files = (
 				1A022147228C1CED0016C637 /* SimilarCompared.mm in Sources */,
 				1A022134228C1CA10016C637 /* ViewController.m in Sources */,
+				1A24B8E92293930E0034160A /* RKAlertMessage.m in Sources */,
 				1A02213F228C1CA10016C637 /* main.m in Sources */,
 				1A022131228C1CA10016C637 /* AppDelegate.m in Sources */,
+				1A24B8E82293930E0034160A /* RKLoadingView.m in Sources */,
 				1A2CD659228D161400591C92 /* UIImage+OpenCV.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -9,5 +9,6 @@ target 'cleaner' do
   # Pods for cleaner
   pod 'OpenCV'
   pod 'CocoaImageHashing', :git => 'https://github.com/ameingast/cocoaimagehashing.git'
+  pod 'MBProgressHUD', '1.1.0'
 
 end

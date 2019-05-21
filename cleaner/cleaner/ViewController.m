@@ -44,6 +44,8 @@
 
 @property (nonatomic, strong) PHFetchResult *fetchResult; /**< 操作对象*/
 
+@property (nonatomic, strong) RKLoadingView *loadingView; /**< loading*/
+
 #pragma mark -
 @property (nonatomic, strong) NSMutableArray *imageArray; /**< 图像数组*/
 @property (nonatomic, strong) UILabel *similar; /**< 相似度*/
@@ -54,7 +56,6 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-	
 	// 添加collectionView
 	[self.view addSubview:self.collectionView];
     // 获取相册权限
@@ -81,6 +82,9 @@
 /// 获取全部照片
 - (void)getAllPhoto {
 	
+    self.loadingView = [[RKLoadingView alloc] initWithMessage:@"loading..."];
+    [self.loadingView showInView:self.view];
+    
     self.imageManager = [[PHCachingImageManager alloc] init];
     
     [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
@@ -140,6 +144,8 @@
     }
     self.dataArray = similarImageDimensionArray;
     [self.collectionView reloadData];
+    
+    [self.loadingView stop];
 }
 
 /// 根据ID获取照片                  
