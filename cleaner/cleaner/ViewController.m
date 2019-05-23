@@ -35,6 +35,7 @@
 @property (nonatomic, strong) PHFetchResult<PHAsset *> *allPhotos; /**< 全部相片*/
 @property (nonatomic, strong) PHFetchResult<PHAssetCollection *> *smartAlbums; /**< 全部相册*/
 @property (nonatomic, strong) PHFetchResult<PHAssetCollection *> *userCollections; /**< 用户创建的相册*/
+@property (nonatomic, strong) NSArray<OSTuple<OSImageId *, OSImageId *> *> *allSimilarImages; /**< 全部相似*/
 
 @property (nonatomic, strong) PHCachingImageManager *imageManager; /**< 缓存管理*/
 @property (nonatomic, strong) PHImageRequestOptions *requestOption; /**< 控制加载图片时的一系列参数*/
@@ -70,6 +71,9 @@
     PHFetchOptions *allPhotosOptions = [[PHFetchOptions alloc] init];
     // 按创建时间升序
     allPhotosOptions.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:YES]];
+    // 是否包含全部 快拍
+    allPhotosOptions.includeAllBurstAssets = YES;
+    
     // 获取所有照片（按创建时间升序）
     _allPhotos = [PHAsset fetchAssetsWithOptions:allPhotosOptions];
     // 获取所有智能相册
@@ -126,27 +130,93 @@
 	// 计算代码运行时间
 	CFAbsoluteTime startTime = CFAbsoluteTimeGetCurrent();
 	
-	NSArray<OSTuple<OSImageId *, OSImageId *> *> *similarImageIdsAsTuples = [[OSImageHashing sharedInstance] similarImagesWithHashingQuality:OSImageHashingQualityHigh forImages:dataArr];
+	self.allSimilarImages = [[OSImageHashing sharedInstance] similarImagesWithHashingQuality:OSImageHashingQualityHigh forImages:dataArr];
 	
 	CFAbsoluteTime linkTime = (CFAbsoluteTimeGetCurrent() - startTime);
 	// 打印运行时间
 	NSLog(@"对比所花时间 %f ms", linkTime * 1000.0);
-	
-    NSLog(@"Similar image ids: %@", similarImageIdsAsTuples);
-    NSLog(@"%ld 对相似图",[similarImageIdsAsTuples count]);
+    NSLog(@"Similar image ids: %@", self.allSimilarImages);
+    NSLog(@"%ld 对相似图",[self.allSimilarImages count]);
     
-    NSMutableArray *similarImageDimensionArray = [NSMutableArray array];
-    for (OSTuple *tuple in similarImageIdsAsTuples) {
-        NSMutableArray *subArray = [NSMutableArray array];
-        [subArray addObject:tuple.first];
-        [subArray addObject:tuple.second];
-        [similarImageDimensionArray addObject:subArray];
-    }
-    self.dataArray = similarImageDimensionArray;
+//    NSMutableArray *similarImageDimensionArray = [NSMutableArray array];
+//    for (OSTuple *tuple in self.allSimilarImages) {
+//        NSMutableArray *subArray = [NSMutableArray array];
+//        [subArray addObject:tuple.first];
+//        [subArray addObject:tuple.second];
+//        [similarImageDimensionArray addObject:subArray];
+//    }
+    
+    
+    NSArray *array = [self organizeData:self.allSimilarImages];
+    
+    self.dataArray = array;
+    
     [self.collectionView reloadData];
     
     [self.loadingView stop];
 }
+
+/// 去重
+- (NSArray *)organizeData:(NSArray<OSTuple<OSImageId *, OSImageId *> *> *)dateArray {
+    NSMutableArray<OSTuple<OSImageId *, OSImageId *> *> *similarArray = [NSMutableArray arrayWithArray:dateArray];
+    
+    // 获取不重复的key
+    NSMutableDictionary *noDuplicateDict = [NSMutableDictionary dictionary];
+    for (OSTuple *tuple in similarArray) {
+        NSString *first = tuple.first;
+        NSString *second = tuple.second;
+        
+        [noDuplicateDict setObject:second forKey:first];
+    }
+    
+    NSMutableDictionary *allDict = [NSMutableDictionary dictionary];
+    // 生成全部字典
+    for (int i = 0; i < [similarArray count]; i++) {
+        OSTuple *tuple = similarArray[i];
+        NSString *first = tuple.first;
+        NSString *second = tuple.second;
+        
+        if ([[allDict allKeys] containsObject:first]) {
+            NSMutableArray *subArray = [allDict objectForKey:first];
+            [subArray addObject:second];
+            continue;
+        }
+        
+        NSMutableArray *subArray = [NSMutableArray arrayWithObject:second];
+        [allDict setObject:subArray forKey:first];
+    }
+    
+    NSLog(@"%@-%ld",allDict,[allDict count]);
+    
+    NSArray *keys = [allDict allKeys];
+    for (int i = 0; i < [allDict count]; i++) {
+        NSMutableArray *firstSub = [allDict objectForKey:keys[i]];
+        for (int j = i+1; j < [allDict count]; j++) {
+            for (NSString *value in firstSub) {
+                if ([keys[j] isEqualToString:value]) {
+                    NSMutableArray *tempArray = [NSMutableArray arrayWithArray:firstSub];
+                    [tempArray addObjectsFromArray:[allDict objectForKey:keys[j]]];
+                    [allDict setObject:tempArray forKey:keys[i]];
+                    [allDict removeObjectForKey:value];
+                }
+            }
+        }
+    }
+
+    NSLog(@"%@-%ld",allDict,[allDict count]);
+    
+    NSMutableArray *all = [NSMutableArray array];
+    keys = [allDict allKeys];
+    for (int i = 0; i < [allDict count]; i++) {
+        NSMutableArray *sub = [NSMutableArray array];
+        [sub addObject:keys[i]];
+        [sub addObjectsFromArray:[allDict objectForKey:keys[i]]];
+        [all addObject:sub];
+    }
+    
+    return all;
+}
+
 
 /// 根据ID获取照片                  
 - (void)getResultWithRequestID:(NSString *)requestID withHandler:(void(^)(UIImage *image))callBack {
@@ -173,6 +243,12 @@
 #pragma mark - delegate
 #pragma mark -- UICollectionViewDelegate
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
+    
+//    if (indexPath.item == 1) {
+//        [self organizeData:self.allSimilarImages];
+//        return;
+//    }
+    
 //    UICollectionViewCell *cell = [collectionView cellForItemAtIndexPath:indexPath];
     [collectionView deselectItemAtIndexPath:indexPath animated:YES];
     // 点击的照片
@@ -194,7 +270,7 @@
 }
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
-	return 2;
+	return [self.dataArray[section] count];
 }
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
