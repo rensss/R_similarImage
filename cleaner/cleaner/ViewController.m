@@ -131,12 +131,38 @@
 	CFAbsoluteTime startTime = CFAbsoluteTimeGetCurrent();
 	
 	self.allSimilarImages = [[OSImageHashing sharedInstance] similarImagesWithHashingQuality:OSImageHashingQualityHigh forImages:dataArr];
-	
+    
 	CFAbsoluteTime linkTime = (CFAbsoluteTimeGetCurrent() - startTime);
 	// 打印运行时间
 	NSLog(@"对比所花时间 %f ms", linkTime * 1000.0);
     NSLog(@"Similar image ids: %@", self.allSimilarImages);
     NSLog(@"%ld 对相似图",[self.allSimilarImages count]);
+    
+    // 计算代码运行时间
+    startTime = CFAbsoluteTimeGetCurrent();
+    
+    NSDictionary<OSImageId *, NSSet<OSImageId *> *> *dict = [[OSImageHashing sharedInstance] dictionaryFromSimilarImagesResult:self.allSimilarImages];
+    
+    linkTime = (CFAbsoluteTimeGetCurrent() - startTime);
+    // 打印运行时间
+    NSLog(@"转字典所花时间 %f ms", linkTime * 1000.0);
+    NSLog(@"Similar image :%@", dict);
+    NSLog(@"%ld 对相似图",[dict count]);
+    
+    NSMutableArray *all = [NSMutableArray array];
+    NSArray *keys = [dict allKeys];
+    for (int i = 0; i < [dict count]; i++) {
+        NSMutableArray *sub = [NSMutableArray array];
+        [sub addObject:keys[i]];
+        NSSet *set = [dict objectForKey:keys[i]];
+        NSEnumerator *enumerator = [set objectEnumerator];
+        NSString *value;
+        while ((value = [enumerator nextObject])) {
+            [sub addObject:value];
+        }
+        [all addObject:sub];
+    }
+    
     
 //    NSMutableArray *similarImageDimensionArray = [NSMutableArray array];
 //    for (OSTuple *tuple in self.allSimilarImages) {
@@ -147,16 +173,19 @@
 //    }
     
     // 去重
-    NSMutableDictionary *allSimilarImagesDict = [self organizeData:self.allSimilarImages];
+//    NSMutableDictionary *allSimilarImagesDict = [self organizeData:self.allSimilarImages];
     
-    NSMutableArray *all = [NSMutableArray array];
-    NSArray *keys = [allSimilarImagesDict allKeys];
-    for (int i = 0; i < [allSimilarImagesDict count]; i++) {
-        NSMutableArray *sub = [NSMutableArray array];
-        [sub addObject:keys[i]];
-        [sub addObjectsFromArray:[allSimilarImagesDict objectForKey:keys[i]]];
-        [all addObject:sub];
-    }
+//    NSMutableArray *all = [NSMutableArray array];
+//    NSArray *keys = [allSimilarImagesDict allKeys];
+//    for (int i = 0; i < [allSimilarImagesDict count]; i++) {
+//        NSMutableArray *sub = [NSMutableArray array];
+//        [sub addObject:keys[i]];
+//        [sub addObjectsFromArray:[allSimilarImagesDict objectForKey:keys[i]]];
+//        [all addObject:sub];
+//    }
+    
+    
+    
     
     self.dataArray = all;
     
@@ -169,17 +198,29 @@
 - (NSMutableDictionary *)organizeData:(NSArray<OSTuple<OSImageId *, OSImageId *> *> *)dateArray {
     NSMutableArray<OSTuple<OSImageId *, OSImageId *> *> *similarArray = [NSMutableArray arrayWithArray:dateArray];
     
+    // 获取所有key
+    NSMutableOrderedSet *allSet = [NSMutableOrderedSet orderedSet];
+    for (OSTuple *tuple in similarArray) {
+        NSString *first = tuple.first;
+        NSString *second = tuple.second;
+        [allSet addObject:first];
+        [allSet addObject:second];
+    }
+    
+    NSLog(@"%@-%ld",allSet,[allSet count]);
+
     // 获取不重复的key
     NSMutableDictionary *noDuplicateDict = [NSMutableDictionary dictionary];
     for (OSTuple *tuple in similarArray) {
         NSString *first = tuple.first;
         NSString *second = tuple.second;
-        
         [noDuplicateDict setObject:second forKey:first];
     }
     
-    NSMutableDictionary *allDict = [NSMutableDictionary dictionary];
+    NSArray *keys;
+    
     // 生成全部字典
+    NSMutableDictionary *allDict = [NSMutableDictionary dictionary];
     for (int i = 0; i < [similarArray count]; i++) {
         OSTuple *tuple = similarArray[i];
         NSString *first = tuple.first;
@@ -198,7 +239,7 @@
     NSLog(@"%@-%ld",allDict,[allDict count]);
     
     // 相似
-    NSArray *keys = [allDict allKeys];
+    keys = [allDict allKeys];
     for (int i = 0; i < [allDict count]; i++) {
         NSMutableArray *firstSub = [allDict objectForKey:keys[i]];
         for (int j = i+1; j < [allDict count]; j++) {
@@ -254,10 +295,10 @@
 #pragma mark -- UICollectionViewDelegate
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
     
-//    if (indexPath.item == 1) {
-//        [self organizeData:self.allSimilarImages];
-//        return;
-//    }
+    if (indexPath.item == 1) {
+        [self organizeData:self.allSimilarImages];
+        return;
+    }
     
 //    UICollectionViewCell *cell = [collectionView cellForItemAtIndexPath:indexPath];
     [collectionView deselectItemAtIndexPath:indexPath animated:YES];
