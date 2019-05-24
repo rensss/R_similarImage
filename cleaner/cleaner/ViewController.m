@@ -146,10 +146,19 @@
 //        [similarImageDimensionArray addObject:subArray];
 //    }
     
+    // 去重
+    NSMutableDictionary *allSimilarImagesDict = [self organizeData:self.allSimilarImages];
     
-    NSArray *array = [self organizeData:self.allSimilarImages];
+    NSMutableArray *all = [NSMutableArray array];
+    NSArray *keys = [allSimilarImagesDict allKeys];
+    for (int i = 0; i < [allSimilarImagesDict count]; i++) {
+        NSMutableArray *sub = [NSMutableArray array];
+        [sub addObject:keys[i]];
+        [sub addObjectsFromArray:[allSimilarImagesDict objectForKey:keys[i]]];
+        [all addObject:sub];
+    }
     
-    self.dataArray = array;
+    self.dataArray = all;
     
     [self.collectionView reloadData];
     
@@ -157,7 +166,7 @@
 }
 
 /// 去重
-- (NSArray *)organizeData:(NSArray<OSTuple<OSImageId *, OSImageId *> *> *)dateArray {
+- (NSMutableDictionary *)organizeData:(NSArray<OSTuple<OSImageId *, OSImageId *> *> *)dateArray {
     NSMutableArray<OSTuple<OSImageId *, OSImageId *> *> *similarArray = [NSMutableArray arrayWithArray:dateArray];
     
     // 获取不重复的key
@@ -188,6 +197,7 @@
     
     NSLog(@"%@-%ld",allDict,[allDict count]);
     
+    // 相似
     NSArray *keys = [allDict allKeys];
     for (int i = 0; i < [allDict count]; i++) {
         NSMutableArray *firstSub = [allDict objectForKey:keys[i]];
@@ -202,19 +212,19 @@
             }
         }
     }
-
-    NSLog(@"%@-%ld",allDict,[allDict count]);
     
-    NSMutableArray *all = [NSMutableArray array];
+    // 子数组去重
     keys = [allDict allKeys];
     for (int i = 0; i < [allDict count]; i++) {
-        NSMutableArray *sub = [NSMutableArray array];
-        [sub addObject:keys[i]];
-        [sub addObjectsFromArray:[allDict objectForKey:keys[i]]];
-        [all addObject:sub];
+        NSMutableArray *tempArray = [NSMutableArray arrayWithArray:[allDict objectForKey:keys[i]]];
+        NSOrderedSet *set = [NSOrderedSet orderedSetWithArray:tempArray];
+        tempArray = [set.array mutableCopy];
+        [allDict setObject:tempArray forKey:keys[i]];
     }
     
-    return all;
+    NSLog(@"%@-%ld",allDict,[allDict count]);
+    
+    return allDict;
 }
 
 
@@ -290,6 +300,23 @@
 	return cell;
 }
 
+- (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath {
+    UICollectionReusableView *view = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"UICollectionReusableView" forIndexPath:indexPath];
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, collectionView.frame.size.width, 30)];
+    label.text = [NSString stringWithFormat:@"%lu",(unsigned long)[self.dataArray[indexPath.section] count]];
+    label.backgroundColor = [UIColor orangeColor];
+    
+    [view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    [view addSubview:label];
+    return view;
+}
+
+// 设置Header的尺寸
+- (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout*)collectionViewLayout referenceSizeForHeaderInSection:(NSInteger)section{
+    return CGSizeMake(collectionView.frame.size.width, 30);
+}
+
+
 #pragma mark -- PHPhotoLibraryChangeObserver
 - (void)photoLibraryDidChange:(PHChange *)changeInstance {
     // Photos may call this method on a background queue;
@@ -324,6 +351,7 @@
 		
 		// 注册 cell
 		[_collectionView registerClass:[UICollectionViewCell class] forCellWithReuseIdentifier:@"UICollectionViewCell"];
+        [_collectionView registerClass:[UICollectionReusableView class] forSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"UICollectionReusableView"];
 	}
 	return _collectionView;
 }
