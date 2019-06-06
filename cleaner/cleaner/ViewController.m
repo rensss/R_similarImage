@@ -412,6 +412,40 @@
     return _requestOption;
 }
 
+#pragma mark - func
+#pragma mark -- 时间分组
+- (NSArray *)groupingAssetWithStartDate:(NSDate *)startDate andEndDate:(NSDate *)endDate byTime:(NSTimeInterval)time {
+    
+    PHFetchOptions* options = [[PHFetchOptions alloc]init];
+    
+    options.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"creationDate" ascending:YES]];
+    
+    // 多媒体类型的渭词
+    NSPredicate *media = [NSPredicate predicateWithFormat:@"mediaType = %d",PHAssetMediaTypeImage];
+    
+    // 查询1小时之内的
+    NSDate *date = [NSDate date];
+    
+    NSDate *lastDate = [date initWithTimeIntervalSinceNow:-3600];
+    
+    NSPredicate *predicateDate = [NSPredicate predicateWithFormat:@"creationDate >= %@", lastDate];
+    
+    // 组合谓词
+    NSCompoundPredicate *compoundPredicate = [NSCompoundPredicate andPredicateWithSubpredicates:@[media, predicateDate]];
+    
+    options.predicate = compoundPredicate;
+    
+    PHFetchResult *result = [PHAsset fetchAssetsWithMediaType:PHAssetMediaTypeImage options:options];
+    
+    if (result.count == 0) {
+        NSLog(@"没有查询到数据");
+    } else {
+        NSLog(@"一个小时以内的图片一共%ld张",[result count]);
+    }
+    
+    return nil;
+}
+
 #pragma mark - 方向二 图片对比
 #pragma mark - InitUI
 - (void)initUI {
